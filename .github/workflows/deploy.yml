@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -23,6 +24,23 @@ jobs:
           npm ci
           npm run build
           tar -czf frontend-dist.tar.gz -C dist .
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: frontend-dist.tar.gz
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: ./
 
       - name: Transfer Build to EC2
         uses: appleboy/scp-action@v0.1.4
