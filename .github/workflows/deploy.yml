@@ -1,0 +1,48 @@
+name: Deploy Vite React Frontend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install and Build
+        run: |
+          npm ci
+          npm run build
+          tar -czf frontend-dist.tar.gz -C dist .
+
+      - name: Transfer Build to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "frontend-dist.tar.gz"
+          target: "/home/ubuntu/app"
+
+      - name: Extract and Restart NGINX
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            sudo mkdir -p /home/ubuntu/app/dist
+            sudo rm -rf /home/ubuntu/app/dist/*
+            sudo tar -xzf /home/ubuntu/app/frontend-dist.tar.gz -C /home/ubuntu/app/dist
+            rm /home/ubuntu/app/frontend-dist.tar.gz
+            sudo systemctl restart nginx
