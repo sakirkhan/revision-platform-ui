@@ -3,6 +3,7 @@ import './index.css';
 import Landing from './components/Landing';
 import Wizard from './components/Wizard';
 import Dashboard from './components/Dashboard';
+import HistoryPage from './components/HistoryPage';
 
 import { updatePreferences } from './api';
 
@@ -41,12 +42,15 @@ function App() {
 
   const toLanding = () => setView('LANDING');
   const toWizard = () => setView('WIZARD');
+  const toDashboard = () => setView('DASHBOARD');
+  const toHistory = () => setView('HISTORY');
 
   return (
     <main>
       {view === 'LANDING' && <Landing onStart={startWizard} />}
       {view === 'WIZARD' && <Wizard onComplete={handleWizardComplete} onBack={toLanding} />}
-      {view === 'DASHBOARD' && preferences && <Dashboard user={preferences} onBack={toWizard} />}
+      {view === 'DASHBOARD' && preferences && <Dashboard user={preferences} onBack={toWizard} onViewHistory={toHistory} />}
+      {view === 'HISTORY' && <HistoryPage email={localStorage.getItem('userEmail')} onBack={toDashboard} />}
       {view === 'UNSUBSCRIBE' && <Unsubscribe />}
       {view === 'FEEDBACK' && <FeedbackPage />}
       {view !== 'FEEDBACK' && <FeedbackWidget viewName={view} />}

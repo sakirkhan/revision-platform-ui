@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { registerOrUpdateUser, getTodayQuestions, requestEmailOtp, validateEmailOtp, getPreviewQuestions, triggerNotificationEmail, getUserQuestionHistory } from '../api';
 
-const Dashboard = ({ user, onBack }) => {
+const Dashboard = ({ user, onBack, onViewHistory }) => {
   const [isRegistered, setIsRegistered] = useState(() => !!localStorage.getItem('userEmail'));
   const [showModal, setShowModal] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [previewQuestions, setPreviewQuestions] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [historyPage, setHistoryPage] = useState(0); // Spring Data JPA is 0-indexed
-  const [totalPages, setTotalPages] = useState(0);
   const [isTriggering, setIsTriggering] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const HISTORY_PAGE_SIZE = 5;
@@ -30,32 +27,8 @@ const Dashboard = ({ user, onBack }) => {
       getTodayQuestions(email)
         .then(data => setQuestions(data))
         .catch(err => console.error("Failed to fetch questions", err));
-
-      fetchHistory(0);
     }
   }, [isRegistered, email]);
-
-  const fetchHistory = (page) => {
-    getUserQuestionHistory(email, page, HISTORY_PAGE_SIZE)
-      .then(data => {
-        if (data && data.content) {
-          setHistory(data.content);
-          setTotalPages(data.totalPages);
-          setHistoryPage(data.number);
-        } else if (Array.isArray(data)) {
-          setHistory(data.slice(page * HISTORY_PAGE_SIZE, (page + 1) * HISTORY_PAGE_SIZE));
-          setTotalPages(Math.ceil(data.length / HISTORY_PAGE_SIZE));
-          setHistoryPage(page);
-        } else {
-          setHistory([]);
-          setTotalPages(0);
-        }
-      })
-      .catch(err => {
-        console.error("Failed to fetch history", err);
-        setHistory([]);
-      });
-  };
 
   useEffect(() => {
     if (!isRegistered) {
@@ -149,8 +122,6 @@ const Dashboard = ({ user, onBack }) => {
       setIsTriggering(false);
     }
   };
-
-
   return (
     <div className="container center-content" style={{ padding: '2rem 1rem', position: 'relative' }}>
 
@@ -191,7 +162,7 @@ const Dashboard = ({ user, onBack }) => {
             &larr; Edit Preferences
           </button>
           {isRegistered && (
-            <button type="button" className="outline-btn" style={{ padding: '8px 16px', fontSize: '0.85rem', borderColor: 'var(--accent-red)', color: 'var(--text-secondary)' }} onClick={handleLogout}>
+            <button type="button" className="outline-btn" style={{ padding: '8px 16px', fontSize: '0.85rem', borderColor: 'var(--accent-red)', color: 'var(--text-secondary)', marginLeft: 'auto' }} onClick={handleLogout}>
               Logout
             </button>
           )}
@@ -216,35 +187,51 @@ const Dashboard = ({ user, onBack }) => {
           </div>
           <div className="option-card" style={{ background: 'rgba(255,255,255,0.03)', pointerEvents: 'none' }}>
             <h3 style={{ fontSize: '2.5rem', color: 'var(--secondary-accent)', marginBottom: '4px' }}>
-              {user.days}
+              {user.questionCountPerWeekend || user.questionsPerDay}
             </h3>
-            <p style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Days to Complete</p>
+            <p style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Weekend Target</p>
           </div>
         </div>
 
         {!isRegistered && (
           <div style={{
-            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(6, 182, 212, 0.1))',
-            borderRadius: '16px', padding: '24px', marginBottom: '2rem', border: '1px solid var(--primary-accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap'
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(6, 182, 212, 0.15))',
+            borderRadius: '16px', padding: '28px', marginBottom: '2rem', border: '1px solid rgba(139, 92, 246, 0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap',
+            boxShadow: '0 8px 32px rgba(139, 92, 246, 0.1)'
           }}>
             <div style={{ flex: '1 1 300px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                <span className="gradient-text">Lock in your commitment.</span>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="url(#grad1)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#06b6d4" /></linearGradient></defs>
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span className="gradient-text">Unlock Your Full Dashboard</span>
               </h3>
-              <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', margin: 0 }}>
-                Get these strictly curated daily questions delivered to your inbox every morning. Stay consistent, no excuses.
+              <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                Save your preferences, track your topic-wise progress, and get your personalized daily DSA challenges delivered straight to your inbox.
               </p>
             </div>
-            <button className="primary-btn animate-pulse-glow" onClick={() => setShowModal(true)}>
-              Turn on Daily Emails
+            <button className="primary-btn animate-pulse-glow" onClick={() => setShowModal(true)} style={{ fontSize: '1.05rem', padding: '12px 28px', whiteSpace: 'nowrap', boxShadow: '0 0 20px rgba(139, 92, 246, 0.4)' }}>
+              Login / Signup to Activate
             </button>
           </div>
         )}
 
         <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '16px', padding: '2rem', border: '1px solid var(--surface-border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>{isRegistered ? "Today's Mission" : "Today's Mission (Mock)"}</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 600, margin: 0 }}>{isRegistered ? "Today's Mission" : "Today's Mission (Mock)"}</h3>
+              {isRegistered && (
+                <button type="button" className="primary-btn" disabled={isTriggering} style={{ padding: '6px 14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleTriggerEmail}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                  {isTriggering ? 'Sending...' : 'Email Me Now'}
+                </button>
+              )}
+            </div>
             <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>0 / {isRegistered && questions.length > 0 ? questions.length : user.questionsPerDay} pending</span>
           </div>
 
@@ -283,66 +270,17 @@ const Dashboard = ({ user, onBack }) => {
         </div>
 
         {isRegistered && (
-          <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '16px', padding: '2rem', border: '1px solid var(--surface-border)', marginTop: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>Archived History</h3>
-              <button onClick={handleTriggerEmail} disabled={isTriggering} className="primary-btn" style={{ padding: '6px 16px', fontSize: '0.85rem' }}>
-                {isTriggering ? 'Triggering...' : 'Force Trigger Email Now'}
-              </button>
-            </div>
-
-            {history.length === 0 ? (
-              <div style={{ color: 'var(--text-secondary)', padding: '2rem 0', textAlign: 'center' }}>
-                No past questions found in your archive yet.
-              </div>
-            ) : (
-              <div>
-                <div style={{ paddingRight: '8px', minHeight: '100px' }}>
-                  {history.map((record, idx) => {
-                    const q = record.question;
-                    return (
-                      <div key={record.id} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '10px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', opacity: 0.85 }}>
-                        <div>
-                          <h4 style={{ fontSize: '1rem', marginBottom: '4px' }}>{q.title}</h4>
-                          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
-                            {q.topicUrl || q.topic?.name || 'DSA'} • {q.difficulty} • Sent: {new Date(record.sentDate).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'flex-end', marginLeft: '16px' }}>
-                          <a href={q.url} target="_blank" rel="noopener noreferrer" style={{ color: '#a78bfa', fontSize: '0.85rem', textDecoration: 'none', fontWeight: 600 }}>Solve on LeetCode</a>
-                          {q.neetcodeUrl && (
-                             <a href={q.neetcodeUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#34d399', fontSize: '0.85rem', textDecoration: 'none', fontWeight: 600 }}>Solve on NeetCode</a>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                    <button
-                      onClick={() => fetchHistory(Math.max(0, historyPage - 1))}
-                      disabled={historyPage === 0}
-                      className="outline-btn" style={{ padding: '6px 12px', fontSize: '0.8rem', opacity: historyPage === 0 ? 0.5 : 1 }}
-                    >
-                      &larr; Previous
-                    </button>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                      Page {historyPage + 1} of {totalPages}
-                    </span>
-                    <button
-                      onClick={() => fetchHistory(Math.min(totalPages - 1, historyPage + 1))}
-                      disabled={historyPage === totalPages - 1}
-                      className="outline-btn" style={{ padding: '6px 12px', fontSize: '0.8rem', opacity: historyPage === totalPages - 1 ? 0.5 : 1 }}
-                    >
-                      Next &rarr;
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+          <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}>
+            <button 
+              className="primary-btn" 
+              onClick={onViewHistory} 
+              style={{ padding: '14px 28px', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              View Full History & Topics Progress
+            </button>
           </div>
         )}
       </div>

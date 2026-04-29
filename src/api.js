@@ -1,4 +1,5 @@
-export const API_BASE_URL = '/api';
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+export const API_BASE_URL = isLocalhost ? 'http://localhost:8080/api' : '/api';
 
 export const registerOrUpdateUser = async (email, preferences) => {
   const response = await fetch(`${API_BASE_URL}/users/register`, {
@@ -10,6 +11,7 @@ export const registerOrUpdateUser = async (email, preferences) => {
       email,
       name: email.split('@')[0], 
       questionCountPerDay: preferences.questionsPerDay,
+      questionCountPerWeekend: preferences.questionCountPerWeekend,
       revisionDurationDays: preferences.days,
       preferredDifficulties: preferences.difficulty === 'Random' ? null : [preferences.difficulty],
       preferredTopics: preferences.topics && preferences.topics.length > 0 ? preferences.topics : null,
@@ -31,6 +33,7 @@ export const updatePreferences = async (email, preferences) => {
     },
     body: JSON.stringify({
       questionCountPerDay: preferences.questionsPerDay,
+      questionCountPerWeekend: preferences.questionCountPerWeekend,
       revisionDurationDays: preferences.days,
       preferredDifficulties: preferences.difficulty === 'Random' ? null : [preferences.difficulty],
       preferredTopics: preferences.topics && preferences.topics.length > 0 ? preferences.topics : null,
@@ -133,5 +136,18 @@ export const submitFeedback = async (email, type, description, imageFile) => {
   });
   if (!response.ok) throw new Error('Failed to submit feedback');
   return response.text();
+};
+
+export const getHistoryByTopic = async (email) => {
+  const response = await fetch(`${API_BASE_URL}/questions/history/topics?email=${encodeURIComponent(email)}`);
+  if (!response.ok) throw new Error('Failed to fetch history by topic');
+  return response.json();
+};
+
+export const resetTopicHistory = async (email, topic) => {
+  const response = await fetch(`${API_BASE_URL}/questions/history/reset-topic?email=${encodeURIComponent(email)}&topic=${encodeURIComponent(topic)}`, {
+    method: 'POST'
+  });
+  if (!response.ok) throw new Error('Failed to reset topic history');
 };
 

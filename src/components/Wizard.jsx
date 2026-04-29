@@ -8,7 +8,8 @@ const Wizard = ({ onComplete, onBack }) => {
   const [topicsList, setTopicsList] = useState([]);
   
   // User Preferences
-  const [days, setDays] = useState(60);
+  const [questionsPerDay, setQuestionsPerDay] = useState(3);
+  const [weekendQuestions, setWeekendQuestions] = useState(null);
   const [difficulty, setDifficulty] = useState('Medium');
   const [selectedTopics, setSelectedTopics] = useState([]);
   
@@ -28,10 +29,11 @@ const Wizard = ({ onComplete, onBack }) => {
     setIsLoading(true);
     setTimeout(() => {
       onComplete({
-        days, 
+        days: Math.ceil(TOTAL_QUESTIONS / questionsPerDay), 
         difficulty, 
         topics: selectedTopics,
-        questionsPerDay: Math.ceil(TOTAL_QUESTIONS / days)
+        questionsPerDay: questionsPerDay,
+        questionCountPerWeekend: weekendQuestions !== null ? weekendQuestions : questionsPerDay
       });
     }, 1500);
   };
@@ -52,36 +54,56 @@ const Wizard = ({ onComplete, onBack }) => {
         {/* --- STEP 1: TIMELINE --- */}
         {step === 1 && (
           <div className="animate-fade-up">
-            <h2 className="wizard-title">Timeline Goal</h2>
-            <p className="wizard-subtitle">How fast do you want to complete the NeetCode 150?</p>
+            <h2 className="wizard-title">Daily Target</h2>
+            <p className="wizard-subtitle">How many questions do you want to practice each day?</p>
             
             <div style={{ background: 'rgba(0,0,0,0.1)', padding: '2rem', borderRadius: '16px', marginBottom: '2rem', textAlign: 'center', border: '1px solid var(--surface-border)' }}>
               <input 
                 type="number" 
-                value={days} 
-                onChange={(e) => setDays(Number(e.target.value))}
+                value={questionsPerDay} 
+                onChange={(e) => setQuestionsPerDay(Math.max(1, Number(e.target.value)))}
                 style={{ 
-                  fontSize: '3rem', fontWeight: '800', fontFamily: 'var(--font-heading)', 
+                  fontSize: '3.5rem', fontWeight: '800', fontFamily: 'var(--font-heading)', 
                   color: 'var(--primary-accent)', lineHeight: 1, background: 'transparent',
                   border: 'none', textAlign: 'center', width: '120px', outline: 'none'
                 }} 
               />
-              <div style={{ color: 'var(--text-secondary)', fontWeight: 500, marginTop: '8px' }}>Days to completion</div>
+              <div style={{ color: 'var(--text-secondary)', fontWeight: 500, marginTop: '8px' }}>Questions per day</div>
               <div style={{ marginTop: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>
-                That's <span className="gradient-text" style={{ fontSize: '1.2rem' }}>{Math.ceil(TOTAL_QUESTIONS / days)}</span> questions per day.
+                Estimated completion: <span className="gradient-text" style={{ fontSize: '1.2rem' }}>{Math.ceil(TOTAL_QUESTIONS / questionsPerDay)} days</span>
               </div>
             </div>
 
             <input 
               type="range" 
-              min="30" max="150" step="15"
-              value={days}
-              onChange={(e) => setDays(Number(e.target.value))}
+              min="1" max="10" step="1"
+              value={questionsPerDay}
+              onChange={(e) => setQuestionsPerDay(Number(e.target.value))}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '2rem' }}>
-              <span>Intense (30d)</span>
-              <span>Relaxed (150d)</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+              <span>Relaxed (1/day)</span>
+              <span>Intense (10/day)</span>
             </div>
+
+            <div style={{ background: 'rgba(0,0,0,0.1)', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem', textAlign: 'center', border: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ textAlign: 'left', flex: 1 }}>
+                <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '4px' }}>Weekend Quota (Sat/Sun)</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Leave empty to keep your daily pace. Set to 0 to rest!</div>
+              </div>
+              <input 
+                type="number" 
+                min="0" max="20"
+                placeholder={questionsPerDay}
+                value={weekendQuestions === null ? '' : weekendQuestions}
+                onChange={(e) => setWeekendQuestions(e.target.value === '' ? null : Number(e.target.value))}
+                style={{
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--primary-accent)',
+                  color: 'var(--primary-light)', padding: '10px', borderRadius: '8px', width: '70px',
+                  fontSize: '1.2rem', fontWeight: '700', textAlign: 'center', outline: 'none'
+                }}
+              />
+            </div>
+
             <div style={{ display: 'flex', gap: '12px' }}>
               <button type="button" className="outline-btn" style={{ flex: 1 }} onClick={onBack}>Back to Home</button>
               <button type="button" className="primary-btn" style={{ flex: 1 }} onClick={nextStep}>Next Step</button>
