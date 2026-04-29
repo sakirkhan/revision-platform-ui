@@ -13,7 +13,7 @@ const Wizard = ({ onComplete, onBack }) => {
   const [difficulty, setDifficulty] = useState('Medium');
   const [selectedTopics, setSelectedTopics] = useState([]);
   
-  const [isLoading, setIsLoading] = useState(false);
+
 
   useEffect(() => {
     getTopics().then(data => setTopicsList(data)).catch(console.error);
@@ -26,7 +26,7 @@ const Wizard = ({ onComplete, onBack }) => {
   const handleFinish = (e) => {
     if (e) e.preventDefault();
     setStep(4);
-    setIsLoading(true);
+    setStep(4);
     setTimeout(() => {
       onComplete({
         days: Math.ceil(TOTAL_QUESTIONS / questionsPerDay), 
