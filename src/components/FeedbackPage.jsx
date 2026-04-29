@@ -26,11 +26,10 @@ const FeedbackPage = () => {
     try {
       await submitFeedback(normalizedEmail, type, `[Page: EMAIL_FLOW] ${description}`, image);
       localStorage.setItem('userEmail', normalizedEmail);
-      setSuccessMessage('Thanks! Your feedback has been submitted.');
-      setDescription('');
-      setImage(null);
-    } catch (err) {
-      alert('Failed to submit feedback. Please try again.');
+      setSuccessMessage('Thank you! Your feedback has been received. 🚀');
+      setTimeout(() => window.location.href = '/', 3000);
+    } catch {
+      setSuccessMessage('Oops! Failed to submit feedback. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

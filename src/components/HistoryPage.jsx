@@ -21,6 +21,7 @@ const HistoryPage = ({ email, onBack }) => {
       fetchHistory(0);
       fetchTopicHistory();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email]);
 
   const fetchHistory = (page) => {
@@ -39,8 +40,7 @@ const HistoryPage = ({ email, onBack }) => {
           setTotalPages(0);
         }
       })
-      .catch(err => {
-        console.error("Failed to fetch history", err);
+      .catch((/* err */) => {
         setHistory([]);
       });
   };
@@ -48,7 +48,7 @@ const HistoryPage = ({ email, onBack }) => {
   const fetchTopicHistory = () => {
     getHistoryByTopic(email)
       .then(data => setTopicHistory(data || {}))
-      .catch(err => console.error("Failed to fetch topic history", err));
+      .catch(() => console.error("Failed to fetch topic history"));
   };
 
   const handleTriggerEmail = async () => {
@@ -56,7 +56,7 @@ const HistoryPage = ({ email, onBack }) => {
     try {
       const msg = await triggerNotificationEmail(email);
       showToast(msg);
-    } catch (err) {
+    } catch {
       showToast('Failed to trigger email. Please try again.', true);
     } finally {
       setIsTriggering(false);
@@ -70,9 +70,18 @@ const HistoryPage = ({ email, onBack }) => {
       showToast(`Topic ${topic} has been reset.`, false);
       fetchTopicHistory();
       fetchHistory(0);
-    } catch (err) {
+    } catch {
       showToast('Failed to reset topic.', true);
     }
+  };
+
+  const getTopicColor = (topicStr) => {
+    let hash = 0;
+    for (let i = 0; i < topicStr.length; i++) {
+      hash = topicStr.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 70%, 65%)`;
   };
 
   return (
@@ -176,10 +185,12 @@ const HistoryPage = ({ email, onBack }) => {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {Object.entries(topicHistory).map(([topic, qs]) => (
-                  <div key={topic} style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
-                      <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--primary-light)' }}>{topic} <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>({qs.length} questions sent)</span></h4>
+                {Object.entries(topicHistory).map(([topic, qs]) => {
+                  const topicColor = getTopicColor(topic);
+                  return (
+                    <div key={topic} style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '16px', border: '1px solid rgba(255,255,255,0.05)', borderLeft: `4px solid ${topicColor}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem', color: topicColor }}>{topic} <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>({qs.length} questions sent)</span></h4>
                       <button 
                         onClick={() => handleResetTopic(topic)} 
                         className="outline-btn" 
@@ -203,7 +214,7 @@ const HistoryPage = ({ email, onBack }) => {
                       ))}
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             )
           )}

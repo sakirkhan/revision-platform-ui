@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { registerOrUpdateUser, getTodayQuestions, requestEmailOtp, validateEmailOtp, getPreviewQuestions, triggerNotificationEmail, getUserQuestionHistory } from '../api';
+import { registerOrUpdateUser, getTodayQuestions, requestEmailOtp, validateEmailOtp, getPreviewQuestions, triggerNotificationEmail } from '../api';
 
 const Dashboard = ({ user, onBack, onViewHistory }) => {
   const [isRegistered, setIsRegistered] = useState(() => !!localStorage.getItem('userEmail'));
@@ -8,6 +8,7 @@ const Dashboard = ({ user, onBack, onViewHistory }) => {
   const [previewQuestions, setPreviewQuestions] = useState([]);
   const [isTriggering, setIsTriggering] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const [meme, setMeme] = useState(null);
   const HISTORY_PAGE_SIZE = 5;
 
   const showToast = (msg, isError = false) => {
@@ -37,6 +38,70 @@ const Dashboard = ({ user, onBack, onViewHistory }) => {
         .catch(err => console.error("Failed to fetch preview questions", err));
     }
   }, [isRegistered, user.difficulty, user.questionsPerDay, user.topics]);
+
+  const HINDI_MEMES = [
+    {
+      title: "Arey bhai, abhi coding nahi karega to kab karega?",
+      url: "https://media.giphy.com/media/LmNwrBhejkK9EFP504/giphy.gif"
+    },
+    {
+      title: "Jo daily karta rahega kaam, wo kabhi nahi hoga fail! 🚀",
+      url: "https://media.giphy.com/media/13HgwGsXF0aiGY/giphy.gif"
+    },
+    {
+      title: "Bug fix karte karte subah ho gayi bro... 😭",
+      url: "https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif"
+    },
+    {
+      title: "Jab production code first time mein chal jaye! 🕺",
+      url: "https://media.giphy.com/media/blSTtZehjAZ8I/giphy.gif"
+    },
+    {
+      title: "Bhai bas ek chota sa feature hai, 5 minute lagenge... 😅",
+      url: "https://media.giphy.com/media/3o6wrebnKWmvx4ZBio/giphy.gif"
+    },
+    {
+      title: "Production me fat gaya toh mera naam mat lena! 🏃",
+      url: "https://media.giphy.com/media/jUwpcgza92QC8/giphy.gif"
+    },
+    {
+      title: "Weekend plan: Neetcode 150... Reality: 😴",
+      url: "https://media.giphy.com/media/mguPrVJAnEHIY/giphy.gif"
+    },
+    {
+      title: "Me explaining my code to the senior developer 🤯",
+      url: "https://media.giphy.com/media/l0IylOPIQiGW9ODlK/giphy.gif"
+    },
+    {
+      title: "Bina StackOverflow ke ek line code bhi likh du toh... 😂",
+      url: "https://media.giphy.com/media/YQitE4YNQxWuOhmDfb/giphy.gif"
+    },
+    {
+      title: "HR: 'We have a very chilled out work culture'... The culture: 🫠",
+      url: "https://media.giphy.com/media/tZCkL6BsL2AAo/giphy.gif"
+    },
+    {
+      title: "Jab manager bole 'Urgent hai, aaj hi chahiye!' ⌨️💨",
+      url: "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif"
+    },
+    {
+      title: "Me pushing code directly to production on Friday evening 🧨",
+      url: "https://media.giphy.com/media/oe33xf3B50fsc/giphy.gif"
+    },
+    {
+      title: "Freshers looking at the legacy codebase for the first time 😵",
+      url: "https://media.giphy.com/media/g01ZnwAUvutuK8GIQn/giphy.gif"
+    },
+    {
+      title: "Code review comments padhne ke baad meri halat 🥲",
+      url: "https://media.giphy.com/media/OPU6wzx8JrHna/giphy.gif"
+    }
+  ];
+
+  useEffect(() => {
+    const randomMeme = HINDI_MEMES[Math.floor(Math.random() * HINDI_MEMES.length)];
+    setMeme(randomMeme);
+  }, []);
 
   const handleOtpChange = (index, value) => {
     if (value.length > 1) return;
@@ -72,8 +137,7 @@ const Dashboard = ({ user, onBack, onViewHistory }) => {
       setOtp(['', '', '', '']);
       setRegStep(2);
       showToast("Verification code deployed to your inbox!");
-    } catch (err) {
-      console.error(err);
+    } catch {
       showToast('Failed to send verification code. Please check your email.', true);
     } finally {
       setIsLoading(false);
@@ -97,8 +161,7 @@ const Dashboard = ({ user, onBack, onViewHistory }) => {
       setIsRegistered(true);
       setShowModal(false);
       showToast("Success! Plan activated natively.", false);
-    } catch (err) {
-      console.error(err);
+    } catch {
       showToast('Failed to verify. Please check console for details.', true);
     } finally {
       setIsLoading(false);
@@ -116,7 +179,7 @@ const Dashboard = ({ user, onBack, onViewHistory }) => {
     try {
       const msg = await triggerNotificationEmail(email);
       showToast(msg);
-    } catch (err) {
+    } catch {
       showToast('Failed to trigger email. Please try again.', true);
     } finally {
       setIsTriggering(false);
@@ -268,6 +331,15 @@ const Dashboard = ({ user, onBack, onViewHistory }) => {
             ))
           )}
         </div>
+
+        {/* Meme Section */}
+        {meme && (
+          <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '16px', padding: '2rem', border: '1px solid var(--surface-border)', marginTop: '2rem', textAlign: 'center' }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--primary-light)' }}>Ek Break Toh Banta Hai Boss! ☕</h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>{meme.title}</p>
+            <img src={meme.url} alt="Tech Meme" style={{ maxWidth: '100%', borderRadius: '8px', maxHeight: '400px', objectFit: 'contain' }} />
+          </div>
+        )}
 
         {isRegistered && (
           <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}>
